@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Issue & Return — Labify</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚗️</text></svg>">
+  <style>
+    .issue-tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 4px;
+      width: fit-content;
+      margin-bottom: 24px;
+    }
+    .issue-tab {
+      padding: 9px 22px;
+      border-radius: var(--radius-md);
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      font-family: var(--font-body);
+      white-space: nowrap;
+    }
+    .issue-tab.active {
+      background: linear-gradient(135deg, var(--accent-primary), #3b82f6);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(79,142,247,0.35);
+    }
+    .return-row {
+      background: rgba(16,185,129,0.04);
+      border-left: 3px solid transparent;
+      transition: var(--transition);
+    }
+    .return-row:hover {
+      border-left-color: var(--accent-success);
+      background: rgba(16,185,129,0.08);
+    }
+    .overdue-row {
+      background: rgba(239,68,68,0.04);
+    }
+    .overdue-row:hover {
+      background: rgba(239,68,68,0.08);
+    }
+    .overdue-badge {
+      background: rgba(239,68,68,0.12);
+      color: #ef4444;
+      border: 1px solid rgba(239,68,68,0.25);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 20px;
+      margin-left: 6px;
+    }
+    .step-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin-bottom: 28px;
+    }
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+    }
+    .step-num {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 13px;
+      background: var(--bg-input);
+      border: 2px solid var(--border);
+      color: var(--text-muted);
+      flex-shrink: 0;
+      transition: var(--transition);
+    }
+    .step.active .step-num {
+      background: var(--accent-primary);
+      border-color: var(--accent-primary);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(79,142,247,0.4);
+    }
+    .step.done .step-num {
+      background: var(--accent-success);
+      border-color: var(--accent-success);
+      color: #fff;
+    }
+    .step-label {
+      font-size: 12px; font-weight: 600;
+      color: var(--text-muted);
+      transition: color 0.3s;
+    }
+    .step.active .step-label { color: var(--accent-primary); }
+    .step.done  .step-label { color: var(--accent-success); }
+    .step-line {
+      flex: 1; height: 2px;
+      background: var(--border);
+      margin: 0 8px;
+      border-radius: 2px;
+      transition: background 0.3s;
+    }
+    .step-line.done { background: var(--accent-success); }
+    .borrower-type-toggle {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .type-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: var(--bg-input);
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 600;
+      transition: var(--transition);
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .type-btn.selected {
+      background: rgba(79,142,247,0.1);
+      border-color: var(--accent-primary);
+      color: var(--accent-primary);
+    }
+    .summary-card {
+      background: linear-gradient(135deg, rgba(79,142,247,0.08), rgba(124,58,237,0.06));
+      border: 1px solid rgba(79,142,247,0.2);
+      border-radius: var(--radius-lg);
+      padding: 20px 24px;
+      margin-bottom: 20px;
+    }
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      font-size: 13.5px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .summary-row:last-child { border-bottom: none; }
+    .summary-label { color: var(--text-secondary); }
+    .summary-value { font-weight: 600; }
+  </style>
+</head>
+<body>
+<div class="sidebar-overlay"></div>
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">⚗️</div>
+      <div class="logo-text">Lab<span>EMS</span></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+    <div class="sidebar-footer">
+      <button class="collapse-btn" id="collapseBtn">
+        <span class="collapse-icon nav-icon">◀</span>
+        <span class="nav-label">Collapse</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-content" id="mainContent">
+    <header class="navbar">
+      <button class="icon-btn" id="mobileMenuBtn">☰</button>
+      <div class="page-title-area">
+        <div class="page-breadcrumb" id="pageBreadcrumb">LabEMS</div>
+        <div class="page-heading" id="pageHeading">Issue &amp; Return</div>
+      </div>
+      <div class="navbar-search">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="globalSearch" placeholder="Search..." autocomplete="off">
+      </div>
+      <div class="navbar-actions">
+        <button class="icon-btn" id="themeToggle">☀️</button>
+        <div style="position:relative">
+          <div class="avatar" id="avatarBtn">AD</div>
+          <div class="profile-dropdown" id="profileDropdown">
+            <div class="dropdown-item">👤 Admin Profile</div>
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-item">🚪 Sign Out</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-content">
+
+      <!-- MINI STATS -->
+      <div class="mini-stats" id="miniStats"></div>
+
+      <!-- TABS -->
+      <div class="issue-tabs">
+        <button class="issue-tab active" id="tab-issue"  onclick="switchTab('issue')">📤 Issue Equipment</button>
+        <button class="issue-tab"        id="tab-return" onclick="switchTab('return')">📥 Return Equipment</button>
+        <button class="issue-tab"        id="tab-log"    onclick="switchTab('log')">📋 Transaction Log</button>
+      </div>
+
+      <!-- TAB PANELS -->
+      <div id="panel-issue"></div>
+      <div id="panel-return" style="display:none"></div>
+      <div id="panel-log"    style="display:none"></div>
+
+    </main>
+  </div>
+</div>
+
+<!-- ISSUE MODAL (wizard) -->
+<div class="modal-overlay" id="issueModal">
+  <div class="modal" style="max-width:580px">
+    <div class="modal-header">
+      <div class="modal-title">Issue Equipment</div>
+      <button class="modal-close" onclick="closeModal('issueModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- Step indicator -->
+      <div class="step-indicator">
+        <div class="step active" id="step1">
+          <div class="step-num">1</div>
+          <div class="step-label">Select Equipment</div>
+        </div>
+        <div class="step-line" id="line12"></div>
+        <div class="step" id="step2">
+          <div class="step-num">2</div>
+          <div class="step-label">Borrower Info</div>
+        </div>
+        <div class="step-line" id="line23"></div>
+        <div class="step" id="step3">
+          <div class="step-num">3</div>
+          <div class="step-label">Confirm</div>
+        </div>
+      </div>
+
+      <!-- Step 1: Equipment -->
+      <div id="wizStep1">
+        <div class="form-group">
+          <label>Select Equipment *</label>
+          <select id="fEquipment" onchange="onEquipmentChange()">
+            <option value="">— Choose equipment —</option>
+          </select>
+          <div class="form-error" id="fEqErr">Please select equipment</div>
+        </div>
+        <div id="eqInfo" style="display:none;margin-top:14px">
+          <div style="
+            background:var(--bg-input);border-radius:var(--radius-md);
+            padding:14px 16px;display:grid;grid-template-columns:1fr 1fr;gap:10px
+          ">
+            <div><div style="font-size:11px;color:var(--text-muted)">Category</div><div id="infoCategory" style="font-weight:600;font-size:13.5px"></div></div>
+            <div><div style="font-size:11px;color:var(--text-muted)">Available</div><div id="infoAvail" style="font-weight:700;font-size:18px;color:var(--accent-success)"></div></div>
+            <div><div style="font-size:11px;color:var(--text-muted)">Lab</div><div id="infoLab" style="font-weight:600;font-size:13.5px"></div></div>
+            <div><div style="font-size:11px;color:var(--text-muted)">Condition</div><div id="infoCond" style="font-weight:600;font-size:13.5px"></div></div>
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:16px">
+          <label>Quantity to Issue *</label>
+          <input type="number" id="fQty" min="1" value="1" placeholder="Enter quantity">
+          <div class="form-error" id="fQtyErr">Invalid quantity</div>
+        </div>
+      </div>
+
+      <!-- Step 2: Borrower -->
+      <div id="wizStep2" style="display:none">
+        <div class="form-group">
+          <label>Borrower Type *</label>
+          <div class="borrower-type-toggle">
+            <button class="type-btn selected" id="typeStudent" onclick="setBorrowerType('student')">🎓 Student</button>
+            <button class="type-btn"          id="typeFaculty" onclick="setBorrowerType('faculty')">👨‍🏫 Faculty</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label id="borrowerLabel">Select Student *</label>
+          <select id="fBorrower">
+            <option value="">— Choose borrower —</option>
+          </select>
+          <div class="form-error" id="fBorrErr">Please select a borrower</div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Issue Date *</label>
+            <input type="date" id="fIssueDate">
+          </div>
+          <div class="form-group">
+            <label>Due Date *</label>
+            <input type="date" id="fDueDate">
+            <div class="form-error" id="fDueDateErr">Due date required</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Issued By (Authorizing Faculty)</label>
+          <input type="text" id="fIssuedBy" placeholder="e.g. Dr. Ramesh Iyer">
+        </div>
+        <div class="form-group">
+          <label>Notes / Purpose</label>
+          <textarea id="fNotes" placeholder="Purpose of borrowing, experiment details..." rows="3"></textarea>
+        </div>
+      </div>
+
+      <!-- Step 3: Confirm -->
+      <div id="wizStep3" style="display:none">
+        <div class="summary-card" id="issueSummary"></div>
+        <div style="
+          background:rgba(245,158,11,0.08);
+          border:1px solid rgba(245,158,11,0.25);
+          border-radius:var(--radius-md);
+          padding:12px 16px;
+          font-size:13px;color:var(--accent-warning);
+          display:flex;gap:8px;align-items:flex-start
+        ">
+          <span>⚠️</span>
+          <span>Confirm all details before issuing. The equipment quantity will be reduced immediately.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="wizPrevBtn" onclick="wizPrev()" style="display:none">← Previous</button>
+      <div style="flex:1"></div>
+      <button class="btn btn-secondary" onclick="closeModal('issueModal')">Cancel</button>
+      <button class="btn btn-primary"   id="wizNextBtn" onclick="wizNext()">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- RETURN CONFIRM MODAL -->
+<div class="modal-overlay" id="returnModal">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header">
+      <div class="modal-title">Return Equipment</div>
+      <button class="modal-close" onclick="closeModal('returnModal')">✕</button>
+    </div>
+    <div class="modal-body" id="returnBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('returnModal')">Cancel</button>
+      <button class="btn btn-success"   id="confirmReturnBtn" onclick="confirmReturn()">📥 Confirm Return</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-icon">⚠️</div>
+    <div class="confirm-title" id="confirmTitle">Are you sure?</div>
+    <div class="confirm-msg"   id="confirmMsg">This action cannot be undone.</div>
+    <div class="confirm-actions">
+      <button class="btn btn-secondary" onclick="Confirm.cancel()">Cancel</button>
+      <button class="btn btn-danger"    id="confirmBtn" onclick="Confirm.confirm()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+<script>
+/* ─── STATE ─────────────────────────────────────────── */
+let currentTab     = 'issue';
+let wizardStep     = 1;
+let borrowerType   = 'student';
+let pendingReturnId = null;
+
+/* ─── INIT ──────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  initLayout('issue.html', 'Issue & Return', 'LabEMS / Transactions');
+  renderMiniStats();
+  switchTab('issue');
+});
+
+/* ─── MINI STATS ────────────────────────────────────── */
+function renderMiniStats() {
+  const issues   = DB.get('issues');
+  const active   = issues.filter(i => i.status === 'issued').length;
+  const returned = issues.filter(i => i.status === 'returned').length;
+  const today    = new Date().toISOString().split('T')[0];
+  const overdue  = issues.filter(i => i.status === 'issued' && i.due_date < today).length;
+
+  document.getElementById('miniStats').innerHTML = `
+    <div class="mini-stat">
+      <div class="mini-stat-value text-accent">${issues.length}</div>
+      <div class="mini-stat-label">Total Transactions</div>
+    </div>
+    <div class="mini-stat">
+      <div class="mini-stat-value text-danger">${active}</div>
+      <div class="mini-stat-label">Currently Issued</div>
+    </div>
+    <div class="mini-stat">
+      <div class="mini-stat-value text-success">${returned}</div>
+      <div class="mini-stat-label">Returned</div>
+    </div>
+    <div class="mini-stat">
+      <div class="mini-stat-value text-warning">${overdue}</div>
+      <div class="mini-stat-label">Overdue</div>
+    </div>
+  `;
+}
+
+/* ─── TABS ──────────────────────────────────────────── */
+function switchTab(tab) {
+  currentTab = tab;
+  ['issue','return','log'].forEach(t => {
+    document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
+    document.getElementById(`panel-${t}`).style.display = (t === tab) ? 'block' : 'none';
+  });
+  if (tab === 'issue')  renderIssuePanel();
+  if (tab === 'return') renderReturnPanel();
+  if (tab === 'log')    renderLogPanel();
+}
+
+/* ─── ISSUE PANEL ───────────────────────────────────── */
+function renderIssuePanel() {
+  const equipment = DB.get('equipment').filter(e => e.available > 0);
+
+  document.getElementById('panel-issue').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start">
+
+      <!-- Left: equipment grid -->
+      <div>
+        <div class="section-header">
+          <div>
+            <div class="section-title">Available Equipment</div>
+            <div class="section-sub">Click on an item to issue it quickly</div>
+          </div>
+          <button class="btn btn-primary" onclick="openIssueWizard()">📤 Issue Equipment</button>
+        </div>
+        <div class="search-box" style="max-width:320px;margin-bottom:16px">
+          <span>🔍</span>
+          <input type="text" id="eqSearch" placeholder="Filter equipment..." oninput="filterEquipmentGrid()">
+        </div>
+        <div id="equipmentGrid" style="
+          display:grid;
+          grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+          gap:14px
+        "></div>
+      </div>
+
+      <!-- Right: recent issues sidebar -->
+      <div>
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Active Issues</div>
+              <div class="chart-subtitle">Currently borrowed items</div>
+            </div>
+          </div>
+          <div id="activeIssuesList"></div>
+        </div>
+      </div>
+    </div>
+  `;
+  renderEquipmentGrid();
+  renderActiveIssuesSidebar();
+}
+
+function renderEquipmentGrid(filter = '') {
+  const equipment = DB.get('equipment').filter(e =>
+    e.available > 0 &&
+    (!filter || e.name.toLowerCase().includes(filter))
+  );
+  const labs = DB.get('labs');
+  const getLabName = id => labs.find(l => l.id === parseInt(id))?.name || '—';
+  const catIcons = { Electronics:'⚡', Biology:'🧬', Chemistry:'🧪', Physics:'🔭', Mechanical:'⚙️', General:'📦' };
+
+  const container = document.getElementById('equipmentGrid');
+  if (!equipment.length) {
+    container.innerHTML = `<div style="grid-column:1/-1"><div class="empty-state"><div class="empty-icon">📦</div><div class="empty-title">No available equipment</div><div class="empty-desc">All items are currently issued or under maintenance.</div></div></div>`;
+    return;
+  }
+
+  container.innerHTML = equipment.map(eq => `
+    <div class="stat-card" onclick="openIssueWizard(${eq.id})" style="cursor:pointer;padding:18px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="
+          width:40px;height:40px;border-radius:10px;
+          background:rgba(79,142,247,0.1);
+          display:flex;align-items:center;justify-content:center;font-size:20px
+        ">${catIcons[eq.category]||'📦'}</div>
+        <div style="text-align:right">
+          <div style="font-family:var(--font-display);font-size:22px;font-weight:800;color:var(--accent-success)">${eq.available}</div>
+          <div style="font-size:10px;color:var(--text-muted)">of ${eq.quantity} avail.</div>
+        </div>
+      </div>
+      <div style="font-weight:700;font-size:13.5px;margin-bottom:4px">${eq.name}</div>
+      <div style="font-size:11.5px;color:var(--text-muted);margin-bottom:10px">${getLabName(eq.lab_id)}</div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" style="width:${(eq.available/eq.quantity*100).toFixed(0)}%;background:var(--accent-success)"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterEquipmentGrid() {
+  const q = document.getElementById('eqSearch')?.value.toLowerCase() || '';
+  renderEquipmentGrid(q);
+}
+
+function renderActiveIssuesSidebar() {
+  const issues = DB.get('issues').filter(i => i.status === 'issued').slice(0, 8);
+  const today  = new Date().toISOString().split('T')[0];
+  const container = document.getElementById('activeIssuesList');
+
+  if (!issues.length) {
+    container.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px">No active issues</div>`;
+    return;
+  }
+
+  container.innerHTML = `<ul class="activity-list">` +
+    issues.map(i => {
+      const isOverdue = i.due_date < today;
+      return `
+        <li class="activity-item">
+          <div class="activity-dot" style="background:${isOverdue ? '#ef4444' : '#4f8ef7'}"></div>
+          <div class="activity-content">
+            <div class="activity-text" style="font-size:13px">
+              <span>${i.equipment_name}</span>
+              ${isOverdue ? '<span class="overdue-badge">OVERDUE</span>' : ''}
+            </div>
+            <div class="activity-time">${i.borrower_name} · Due ${Utils.formatDate(i.due_date)}</div>
+          </div>
+          <button class="btn btn-success btn-sm" onclick="openReturnModal(${i.id})" style="font-size:11px;padding:4px 10px">Return</button>
+        </li>`;
+    }).join('') + `</ul>`;
+}
+
+/* ─── ISSUE WIZARD ──────────────────────────────────── */
+function openIssueWizard(preselectedEqId = null) {
+  wizardStep = 1;
+  borrowerType = 'student';
+
+  // Populate equipment dropdown
+  const equipment = DB.get('equipment');
+  const eqSel = document.getElementById('fEquipment');
+  eqSel.innerHTML = '<option value="">— Choose equipment —</option>' +
+    equipment
+      .filter(e => e.available > 0)
+      .map(e => `<option value="${e.id}" ${e.id === preselectedEqId ? 'selected' : ''}>${e.name} (${e.available} avail.)</option>`)
+      .join('');
+
+  if (preselectedEqId) {
+    eqSel.value = preselectedEqId;
+    onEquipmentChange();
+  }
+
+  // Set today & 7 days later
+  const today = new Date().toISOString().split('T')[0];
+  const next7 = new Date(Date.now() + 7 * 864e5).toISOString().split('T')[0];
+  document.getElementById('fIssueDate').value = today;
+  document.getElementById('fDueDate').value   = next7;
+  document.getElementById('fQty').value       = 1;
+  document.getElementById('fNotes').value     = '';
+  document.getElementById('fIssuedBy').value  = '';
+
+  populateBorrowerDropdown();
+  updateWizardUI();
+  clearErrors();
+  openModal('issueModal');
+}
+
+function onEquipmentChange() {
+  const id = parseInt(document.getElementById('fEquipment').value);
+  const eq = DB.get('equipment').find(e => e.id === id);
+  const info = document.getElementById('eqInfo');
+  if (!eq) { info.style.display = 'none'; return; }
+
+  const labs = DB.get('labs');
+  document.getElementById('infoCategory').textContent = eq.category || '—';
+  document.getElementById('infoAvail').textContent    = `${eq.available} / ${eq.quantity}`;
+  document.getElementById('infoLab').textContent      = labs.find(l => l.id === eq.lab_id)?.name || '—';
+  document.getElementById('infoCond').textContent     = eq.condition || '—';
+  document.getElementById('fQty').max = eq.available;
+  info.style.display = 'block';
+}
+
+function setBorrowerType(type) {
+  borrowerType = type;
+  document.getElementById('typeStudent').classList.toggle('selected', type === 'student');
+  document.getElementById('typeFaculty').classList.toggle('selected', type === 'faculty');
+  document.getElementById('borrowerLabel').textContent = type === 'student' ? 'Select Student *' : 'Select Faculty *';
+  populateBorrowerDropdown();
+}
+
+function populateBorrowerDropdown() {
+  const list = borrowerType === 'student' ? DB.get('students') : DB.get('faculty');
+  const sel  = document.getElementById('fBorrower');
+  sel.innerHTML = `<option value="">— Choose ${borrowerType} —</option>` +
+    list.filter(p => p.status === 'active')
+        .map(p => `<option value="${p.id}">${p.name} (${borrowerType === 'student' ? p.roll : p.employee_id})</option>`)
+        .join('');
+}
+
+function wizPrev() {
+  if (wizardStep > 1) { wizardStep--; updateWizardUI(); }
+}
+
+function wizNext() {
+  if (wizardStep === 1) {
+    if (!validateStep1()) return;
+    wizardStep = 2; updateWizardUI();
+  } else if (wizardStep === 2) {
+    if (!validateStep2()) return;
+    buildSummary();
+    wizardStep = 3; updateWizardUI();
+  } else if (wizardStep === 3) {
+    finalIssue();
+  }
+}
+
+function validateStep1() {
+  const eqId = document.getElementById('fEquipment').value;
+  const qty  = parseInt(document.getElementById('fQty').value);
+  const eq   = DB.get('equipment').find(e => e.id === parseInt(eqId));
+  let ok     = true;
+
+  if (!eqId) { showErr('fEqErr', null); ok = false; } else hideErr('fEqErr', null);
+  if (!eq || qty < 1 || qty > eq.available) { showErr('fQtyErr', 'fQty'); ok = false; } else hideErr('fQtyErr', 'fQty');
+  return ok;
+}
+
+function validateStep2() {
+  const borrower  = document.getElementById('fBorrower').value;
+  const dueDate   = document.getElementById('fDueDate').value;
+  const issueDate = document.getElementById('fIssueDate').value;
+  let ok = true;
+
+  if (!borrower) { showErr('fBorrErr', 'fBorrower'); ok = false; } else hideErr('fBorrErr', 'fBorrower');
+  if (!dueDate || dueDate < issueDate) { showErr('fDueDateErr', 'fDueDate'); ok = false; } else hideErr('fDueDateErr', 'fDueDate');
+  return ok;
+}
+
+function buildSummary() {
+  const eqId     = parseInt(document.getElementById('fEquipment').value);
+  const eq       = DB.get('equipment').find(e => e.id === eqId);
+  const bId      = parseInt(document.getElementById('fBorrower').value);
+  const list     = borrowerType === 'student' ? DB.get('students') : DB.get('faculty');
+  const borrower = list.find(p => p.id === bId);
+  const qty      = document.getElementById('fQty').value;
+  const issued   = document.getElementById('fIssueDate').value;
+  const due      = document.getElementById('fDueDate').value;
+
+  document.getElementById('issueSummary').innerHTML = `
+    <div style="font-weight:700;font-size:15px;margin-bottom:14px">📋 Issue Summary</div>
+    ${summaryRow('Equipment', eq?.name || '—')}
+    ${summaryRow('Quantity',  qty)}
+    ${summaryRow('Borrower',  borrower?.name || '—')}
+    ${summaryRow('Type',      borrowerType.charAt(0).toUpperCase() + borrowerType.slice(1))}
+    ${summaryRow('Issue Date',Utils.formatDate(issued))}
+    ${summaryRow('Due Date',  Utils.formatDate(due))}
+    ${summaryRow('Issued By', document.getElementById('fIssuedBy').value || 'Admin')}
+  `;
+}
+
+function summaryRow(label, value) {
+  return `<div class="summary-row"><span class="summary-label">${label}</span><span class="summary-value">${value}</span></div>`;
+}
+
+function finalIssue() {
+  const eqId     = parseInt(document.getElementById('fEquipment').value);
+  const bId      = parseInt(document.getElementById('fBorrower').value);
+  const qty      = parseInt(document.getElementById('fQty').value);
+  const equipment = DB.get('equipment');
+  const eqIdx    = equipment.findIndex(e => e.id === eqId);
+  if (eqIdx < 0) return;
+
+  const eq       = equipment[eqIdx];
+  const list     = borrowerType === 'student' ? DB.get('students') : DB.get('faculty');
+  const borrower = list.find(p => p.id === bId);
+
+  // Reduce available
+  equipment[eqIdx].available -= qty;
+  if (equipment[eqIdx].available === 0) equipment[eqIdx].status = 'issued';
+  DB.set('equipment', equipment);
+
+  // Create issue record
+  const issues = DB.get('issues');
+  const record = {
+    id:             DB.nextId('issues'),
+    equipment_id:   eqId,
+    equipment_name: eq.name,
+    borrower_id:    bId,
+    borrower_name:  borrower?.name || '—',
+    borrower_type:  borrowerType,
+    lab_id:         eq.lab_id,
+    quantity:       qty,
+    issued_date:    document.getElementById('fIssueDate').value,
+    due_date:       document.getElementById('fDueDate').value,
+    returned_date:  null,
+    status:         'issued',
+    issued_by:      document.getElementById('fIssuedBy').value || 'Admin',
+    notes:          document.getElementById('fNotes').value,
+  };
+  issues.push(record);
+  DB.set('issues', issues);
+
+  closeModal('issueModal');
+  Toast.show(`Equipment issued to ${borrower?.name}!`, 'success');
+  renderMiniStats();
+  renderIssuePanel();
+}
+
+function updateWizardUI() {
+  // Steps
+  [1,2,3].forEach(s => {
+    const el = document.getElementById(`step${s}`);
+    el.classList.toggle('active', s === wizardStep);
+    el.classList.toggle('done',   s <  wizardStep);
+  });
+  document.getElementById('line12').classList.toggle('done', wizardStep > 1);
+  document.getElementById('line23').classList.toggle('done', wizardStep > 2);
+
+  // Panels
+  document.getElementById('wizStep1').style.display = wizardStep === 1 ? 'block' : 'none';
+  document.getElementById('wizStep2').style.display = wizardStep === 2 ? 'block' : 'none';
+  document.getElementById('wizStep3').style.display = wizardStep === 3 ? 'block' : 'none';
+
+  // Buttons
+  document.getElementById('wizPrevBtn').style.display = wizardStep > 1 ? 'inline-flex' : 'none';
+  const nextBtn = document.getElementById('wizNextBtn');
+  nextBtn.textContent = wizardStep === 3 ? '✅ Issue Equipment' : 'Next →';
+}
+
+/* ─── RETURN PANEL ──────────────────────────────────── */
+function renderReturnPanel() {
+  const issues = DB.get('issues').filter(i => i.status === 'issued');
+  const today  = new Date().toISOString().split('T')[0];
+
+  document.getElementById('panel-return').innerHTML = `
+    <div class="section-header">
+      <div>
+        <div class="section-title">Return Equipment</div>
+        <div class="section-sub">${issues.length} item(s) currently issued</div>
+      </div>
+      <div class="search-box" style="min-width:240px">
+        <span>🔍</span>
+        <input type="text" id="returnSearch" placeholder="Search by equipment, borrower..." oninput="filterReturnTable()">
+      </div>
+    </div>
+
+    <div class="table-card" id="returnTableWrap">
+      ${renderReturnTable(issues, today)}
+    </div>
+  `;
+}
+
+function renderReturnTable(issues, today) {
+  if (!issues.length) {
+    return `<div class="empty-state">
+      <div class="empty-icon">📥</div>
+      <div class="empty-title">No items currently issued</div>
+      <div class="empty-desc">All equipment has been returned.</div>
+    </div>`;
+  }
+  return `
+    <table>
+      <thead>
+        <tr>
+          <th>Issue #</th><th>Equipment</th><th>Borrower</th>
+          <th>Type</th><th>Qty</th><th>Issue Date</th>
+          <th>Due Date</th><th>Status</th><th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="returnTbody">
+        ${issues.map(i => {
+          const isOverdue = i.due_date < today;
+          return `
+            <tr class="${isOverdue ? 'overdue-row' : 'return-row'}">
+              <td style="color:var(--text-muted);font-size:12px">#${i.id}</td>
+              <td>
+                <div style="font-weight:600">${i.equipment_name}</div>
+                <div class="cell-secondary">ID: ${i.equipment_id}</div>
+              </td>
+              <td>
+                <div style="font-weight:600">${i.borrower_name}</div>
+                <div class="cell-secondary">${i.borrower_type}</div>
+              </td>
+              <td>
+                <span style="font-size:18px">${i.borrower_type === 'student' ? '🎓' : '👨‍🏫'}</span>
+              </td>
+              <td style="font-weight:700;color:var(--accent-primary)">${i.quantity}</td>
+              <td>${Utils.formatDate(i.issued_date)}</td>
+              <td>
+                ${Utils.formatDate(i.due_date)}
+                ${isOverdue ? '<span class="overdue-badge">OVERDUE</span>' : ''}
+              </td>
+              <td>${Utils.statusBadge(i.status)}</td>
+              <td>
+                <button class="btn btn-success btn-sm" onclick="openReturnModal(${i.id})">
+                  📥 Return
+                </button>
+              </td>
+            </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`;
+}
+
+function filterReturnTable() {
+  const q = document.getElementById('returnSearch')?.value.toLowerCase() || '';
+  const issues = DB.get('issues').filter(i =>
+    i.status === 'issued' &&
+    (!q || i.equipment_name.toLowerCase().includes(q) || i.borrower_name.toLowerCase().includes(q))
+  );
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('returnTableWrap').innerHTML = renderReturnTable(issues, today);
+}
+
+/* ─── RETURN MODAL ──────────────────────────────────── */
+function openReturnModal(issueId) {
+  pendingReturnId = issueId;
+  const issue = DB.get('issues').find(i => i.id === issueId);
+  if (!issue) return;
+  const today = new Date().toISOString().split('T')[0];
+  const isOverdue = issue.due_date < today;
+
+  document.getElementById('returnBody').innerHTML = `
+    <div class="summary-card">
+      <div style="font-weight:700;font-size:15px;margin-bottom:14px">📥 Return Confirmation</div>
+      ${summaryRow('Equipment', issue.equipment_name)}
+      ${summaryRow('Borrower',  issue.borrower_name)}
+      ${summaryRow('Qty Returning', issue.quantity)}
+      ${summaryRow('Issue Date', Utils.formatDate(issue.issued_date))}
+      ${summaryRow('Due Date',   Utils.formatDate(issue.due_date))}
+    </div>
+
+    ${isOverdue ? `
+    <div style="
+      background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);
+      border-radius:var(--radius-md);padding:12px 16px;font-size:13px;
+      color:var(--accent-danger);display:flex;gap:8px;margin-bottom:16px
+    ">
+      <span>🚨</span><span>This item is <strong>overdue</strong>. Please note the delay.</span>
+    </div>` : ''}
+
+    <div class="form-group">
+      <label>Return Date</label>
+      <input type="date" id="returnDate" value="${today}">
+    </div>
+    <div class="form-group">
+      <label>Condition on Return</label>
+      <select id="returnCondition">
+        <option value="excellent">Excellent</option>
+        <option value="good" selected>Good</option>
+        <option value="fair">Fair — minor wear</option>
+        <option value="poor">Poor — needs attention</option>
+        <option value="damaged">Damaged</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Remarks</label>
+      <textarea id="returnRemarks" placeholder="Any remarks about the returned equipment..." rows="2"></textarea>
+    </div>
+  `;
+  openModal('returnModal');
+}
+
+function confirmReturn() {
+  if (!pendingReturnId) return;
+  const issues    = DB.get('issues');
+  const idx       = issues.findIndex(i => i.id === pendingReturnId);
+  if (idx < 0)    return;
+
+  const issue     = issues[idx];
+  const returnDate = document.getElementById('returnDate').value;
+  const condition  = document.getElementById('returnCondition').value;
+  const remarks    = document.getElementById('returnRemarks').value;
+
+  // Update issue record
+  issues[idx] = { ...issue, status: 'returned', returned_date: returnDate, return_condition: condition, return_remarks: remarks };
+  DB.set('issues', issues);
+
+  // Restore equipment quantity
+  const equipment = DB.get('equipment');
+  const eqIdx = equipment.findIndex(e => e.id === issue.equipment_id);
+  if (eqIdx >= 0) {
+    equipment[eqIdx].available += issue.quantity;
+    if (equipment[eqIdx].available > 0) equipment[eqIdx].status = 'available';
+    if (condition === 'damaged') equipment[eqIdx].condition = 'poor';
+    DB.set('equipment', equipment);
+  }
+
+  closeModal('returnModal');
+  Toast.show(`${issue.equipment_name} returned successfully!`, 'success');
+  renderMiniStats();
+  if (currentTab === 'return') renderReturnPanel();
+  if (currentTab === 'issue')  renderIssuePanel();
+  pendingReturnId = null;
+}
+
+/* ─── LOG PANEL ─────────────────────────────────────── */
+function renderLogPanel() {
+  let allIssues = DB.get('issues');
+  const today   = new Date().toISOString().split('T')[0];
+
+  document.getElementById('panel-log').innerHTML = `
+    <div class="table-card">
+      <div class="table-toolbar">
+        <div class="search-box">
+          <span>🔍</span>
+          <input type="text" id="logSearch" placeholder="Search transactions..." oninput="filterLog()">
+        </div>
+        <select class="filter-select" id="logStatusFilter" onchange="filterLog()">
+          <option value="">All Status</option>
+          <option value="issued">Issued</option>
+          <option value="returned">Returned</option>
+        </select>
+        <select class="filter-select" id="logTypeFilter" onchange="filterLog()">
+          <option value="">All Types</option>
+          <option value="student">Student</option>
+          <option value="faculty">Faculty</option>
+        </select>
+        <div class="toolbar-spacer"></div>
+        <span style="font-size:13px;color:var(--text-muted)">${allIssues.length} total records</span>
+      </div>
+      <div id="logTableBody">${renderLogTable(allIssues, today)}</div>
+    </div>
+  `;
+}
+
+function filterLog() {
+  const q      = document.getElementById('logSearch')?.value.toLowerCase() || '';
+  const status = document.getElementById('logStatusFilter')?.value || '';
+  const type   = document.getElementById('logTypeFilter')?.value || '';
+  const today  = new Date().toISOString().split('T')[0];
+
+  const filtered = DB.get('issues').filter(i =>
+    (!q      || i.equipment_name.toLowerCase().includes(q) || i.borrower_name.toLowerCase().includes(q)) &&
+    (!status || i.status        === status) &&
+    (!type   || i.borrower_type === type)
+  );
+  document.getElementById('logTableBody').innerHTML = renderLogTable(filtered, today);
+}
+
+function renderLogTable(issues, today) {
+  if (!issues.length) {
+    return `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No records found</div></div>`;
+  }
+  const sorted = [...issues].sort((a, b) => b.id - a.id);
+  return `
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>Equipment</th><th>Borrower</th>
+          <th>Qty</th><th>Issued</th><th>Due</th>
+          <th>Returned</th><th>Status</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${sorted.map(i => {
+          const isOverdue = i.status === 'issued' && i.due_date < today;
+          return `
+            <tr>
+              <td style="color:var(--text-muted);font-size:12px">#${i.id}</td>
+              <td>
+                <div style="font-weight:600">${i.equipment_name}</div>
+                <div class="cell-secondary">By: ${i.issued_by || 'Admin'}</div>
+              </td>
+              <td>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span>${i.borrower_type === 'student' ? '🎓' : '👨‍🏫'}</span>
+                  <div>
+                    <div style="font-weight:600;font-size:13px">${i.borrower_name}</div>
+                    <div class="cell-secondary">${i.borrower_type}</div>
+                  </div>
+                </div>
+              </td>
+              <td style="font-weight:700;color:var(--accent-primary)">${i.quantity}</td>
+              <td>${Utils.formatDate(i.issued_date)}</td>
+              <td>
+                ${Utils.formatDate(i.due_date)}
+                ${isOverdue ? '<span class="overdue-badge">OVERDUE</span>' : ''}
+              </td>
+              <td>${i.returned_date ? Utils.formatDate(i.returned_date) : '<span style="color:var(--text-muted)">—</span>'}</td>
+              <td>${Utils.statusBadge(i.status)}</td>
+              <td>
+                ${i.status === 'issued'
+                  ? `<button class="btn btn-success btn-sm" onclick="openReturnModal(${i.id})">📥 Return</button>`
+                  : `<span style="font-size:12px;color:var(--text-muted)">Completed</span>`}
+              </td>
+            </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`;
+}
+
+/* ─── HELPERS ────────────────────────────────────────── */
+function showErr(errId, fieldId) {
+  document.getElementById(errId)?.classList.add('show');
+  if (fieldId) document.getElementById(fieldId)?.classList.add('invalid');
+}
+function hideErr(errId, fieldId) {
+  document.getElementById(errId)?.classList.remove('show');
+  if (fieldId) document.getElementById(fieldId)?.classList.remove('invalid');
+}
+function clearErrors() {
+  document.querySelectorAll('.form-error').forEach(e => e.classList.remove('show'));
+  document.querySelectorAll('.invalid').forEach(e => e.classList.remove('invalid'));
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Faculty — Labify</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚗️</text></svg>">
+</head>
+<body>
+<div class="sidebar-overlay"></div>
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">⚗️</div>
+      <div class="logo-text">Lab<span>ify</span></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+    <div class="sidebar-footer">
+      <button class="collapse-btn" id="collapseBtn">
+        <span class="collapse-icon nav-icon">◀</span>
+        <span class="nav-label">Collapse</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-content" id="mainContent">
+    <header class="navbar">
+      <button class="icon-btn" id="mobileMenuBtn">☰</button>
+      <div class="page-title-area">
+        <div class="page-breadcrumb" id="pageBreadcrumb">Labify / People</div>
+        <div class="page-heading" id="pageHeading">Faculty</div>
+      </div>
+      <div class="navbar-search">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="globalSearch" placeholder="Search faculty..." autocomplete="off">
+      </div>
+      <div class="navbar-actions">
+        <button class="icon-btn" id="themeToggle">☀️</button>
+        <div style="position:relative">
+          <div class="avatar" id="avatarBtn">AD</div>
+          <div class="profile-dropdown" id="profileDropdown">
+            <div class="dropdown-item">👤 Admin Profile</div>
+            <div class="dropdown-item">⚙️ Settings</div>
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-item">🚪 Sign Out</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-content">
+
+      <!-- Mini Stats -->
+      <div class="mini-stats" id="miniStats"></div>
+
+      <!-- Faculty Cards Grid -->
+      <div class="section-header">
+        <div>
+          <div class="section-title">Faculty Members</div>
+          <div class="section-sub" id="recordCount">Loading...</div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <div class="search-box" style="min-width:220px">
+            <span>🔍</span>
+            <input type="text" id="tableSearch" placeholder="Search by name, ID, dept...">
+          </div>
+          <select class="filter-select" id="deptFilter">
+            <option value="">All Departments</option>
+            <option value="Physics">Physics</option>
+            <option value="Chemistry">Chemistry</option>
+            <option value="Biology">Biology</option>
+            <option value="Electronics">Electronics</option>
+            <option value="Mechanical">Mechanical</option>
+            <option value="Computer Science">Computer Science</option>
+            <option value="Mathematics">Mathematics</option>
+          </select>
+          <select class="filter-select" id="statusFilter">
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+          <button class="btn btn-primary" onclick="openAddModal()">➕ Add Faculty</button>
+        </div>
+      </div>
+
+      <!-- View Toggle -->
+      <div style="display:flex;gap:8px;margin-bottom:20px">
+        <button class="btn btn-secondary btn-sm" id="cardViewBtn" onclick="setView('card')" style="border-color:var(--accent-primary);color:var(--accent-primary)">⊞ Cards</button>
+        <button class="btn btn-secondary btn-sm" id="tableViewBtn" onclick="setView('table')">☰ Table</button>
+      </div>
+
+      <!-- Content Area -->
+      <div id="contentArea"></div>
+    </main>
+  </div>
+</div>
+
+<!-- ADD / EDIT MODAL -->
+<div class="modal-overlay" id="facultyModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Add Faculty Member</div>
+      <button class="modal-close" onclick="closeModal('facultyModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editId">
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Full Name *</label>
+          <input type="text" id="fName" placeholder="e.g. Dr. Ramesh Iyer">
+          <div class="form-error" id="fNameErr">Name is required</div>
+        </div>
+        <div class="form-group">
+          <label>Employee ID *</label>
+          <input type="text" id="fEmpId" placeholder="e.g. FAC001">
+          <div class="form-error" id="fEmpIdErr">Employee ID is required</div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Department *</label>
+          <select id="fDept">
+            <option value="">Select department</option>
+            <option value="Physics">Physics</option>
+            <option value="Chemistry">Chemistry</option>
+            <option value="Biology">Biology</option>
+            <option value="Electronics">Electronics</option>
+            <option value="Mechanical">Mechanical</option>
+            <option value="Computer Science">Computer Science</option>
+            <option value="Mathematics">Mathematics</option>
+          </select>
+          <div class="form-error" id="fDeptErr">Department is required</div>
+        </div>
+        <div class="form-group">
+          <label>Designation</label>
+          <select id="fDesig">
+            <option value="Professor">Professor</option>
+            <option value="Assoc. Professor">Assoc. Professor</option>
+            <option value="Asst. Professor">Asst. Professor</option>
+            <option value="Lecturer">Lecturer</option>
+            <option value="Lab Instructor">Lab Instructor</option>
+            <option value="HOD">HOD</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="fEmail" placeholder="e.g. name@college.edu">
+        </div>
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="tel" id="fPhone" placeholder="e.g. +91 9100001111">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Joining Date</label>
+          <input type="date" id="fJoinDate">
+        </div>
+        <div class="form-group">
+          <label>Qualification</label>
+          <input type="text" id="fQual" placeholder="e.g. Ph.D, M.Tech">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Status</label>
+        <select id="fStatus">
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+          <option value="on-leave">On Leave</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('facultyModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveFaculty()">💾 Save Faculty</button>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW PROFILE MODAL -->
+<div class="modal-overlay" id="profileModal">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-title">Faculty Profile</div>
+      <button class="modal-close" onclick="closeModal('profileModal')">✕</button>
+    </div>
+    <div class="modal-body" id="profileBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('profileModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-icon">🗑️</div>
+    <div class="confirm-title" id="confirmTitle">Delete Faculty?</div>
+    <div class="confirm-msg" id="confirmMsg">This will permanently remove this faculty record.</div>
+    <div class="confirm-actions">
+      <button class="btn btn-secondary" onclick="Confirm.cancel()">Cancel</button>
+      <button class="btn btn-danger" id="confirmBtn" onclick="Confirm.confirm()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+<script>
+let allFaculty = [];
+let filtered = [];
+let currentView = 'card';
+
+const deptColors = {
+  'Physics':         '#06b6d4',
+  'Chemistry':       '#f59e0b',
+  'Biology':         '#10b981',
+  'Electronics':     '#7c3aed',
+  'Mechanical':      '#ef4444',
+  'Computer Science':'#4f8ef7',
+  'Mathematics':     '#ec4899',
+};
+
+const desigRank = {
+  'HOD': 0, 'Professor': 1, 'Assoc. Professor': 2,
+  'Asst. Professor': 3, 'Lecturer': 4, 'Lab Instructor': 5
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  initLayout('faculty.html', 'Faculty', 'LabEMS / People');
+  loadData();
+  document.getElementById('tableSearch').addEventListener('input', Utils.debounce(applyFilters, 250));
+  document.getElementById('deptFilter').addEventListener('change', applyFilters);
+  document.getElementById('statusFilter').addEventListener('change', applyFilters);
+});
+
+function loadData() {
+  allFaculty = DB.get('faculty');
+  renderMiniStats();
+  applyFilters();
+}
+
+function renderMiniStats() {
+  const active  = allFaculty.filter(f => f.status === 'active').length;
+  const onLeave = allFaculty.filter(f => f.status === 'on-leave').length;
+  const depts   = [...new Set(allFaculty.map(f => f.department))].length;
+  const profs   = allFaculty.filter(f => f.designation === 'Professor' || f.designation === 'HOD').length;
+
+  document.getElementById('miniStats').innerHTML = `
+    <div class="mini-stat"><div class="mini-stat-value text-accent">${allFaculty.length}</div><div class="mini-stat-label">Total Faculty</div></div>
+    <div class="mini-stat"><div class="mini-stat-value text-success">${active}</div><div class="mini-stat-label">Active</div></div>
+    <div class="mini-stat"><div class="mini-stat-value text-warning">${onLeave}</div><div class="mini-stat-label">On Leave</div></div>
+    <div class="mini-stat"><div class="mini-stat-value" style="color:var(--accent-teal)">${depts}</div><div class="mini-stat-label">Departments</div></div>
+    <div class="mini-stat"><div class="mini-stat-value" style="color:var(--accent-secondary)">${profs}</div><div class="mini-stat-label">Professors</div></div>
+  `;
+}
+
+function applyFilters() {
+  const q      = document.getElementById('tableSearch').value.toLowerCase();
+  const dept   = document.getElementById('deptFilter').value;
+  const status = document.getElementById('statusFilter').value;
+
+  filtered = allFaculty.filter(f => {
+    const matchQ = !q ||
+      f.name.toLowerCase().includes(q) ||
+      (f.employee_id || '').toLowerCase().includes(q) ||
+      (f.department || '').toLowerCase().includes(q) ||
+      (f.email || '').toLowerCase().includes(q);
+    const matchD = !dept   || f.department === dept;
+    const matchS = !status || f.status     === status;
+    return matchQ && matchD && matchS;
+  });
+
+  document.getElementById('recordCount').textContent =
+    `Showing ${filtered.length} of ${allFaculty.length} records`;
+
+  currentView === 'card' ? renderCards() : renderTable();
+}
+
+// ─── CARD VIEW ──────────────────────────────────────────
+function renderCards() {
+  const area = document.getElementById('contentArea');
+  if (!filtered.length) {
+    area.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">👨‍🏫</div>
+        <div class="empty-title">No faculty members found</div>
+        <div class="empty-desc">Try adjusting filters or add a new faculty member.</div>
+        <button class="btn btn-primary" onclick="openAddModal()">➕ Add Faculty</button>
+      </div>`;
+    return;
+  }
+
+  area.innerHTML = `
+    <div style="
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+      gap:18px;
+    ">
+      ${filtered.map(f => facultyCard(f)).join('')}
+    </div>`;
+}
+
+function facultyCard(f) {
+  const color  = deptColors[f.department] || '#94a3b8';
+  const initials = Utils.getInitials(f.name);
+  const statusMap = { active:'badge-active', inactive:'badge-inactive', 'on-leave':'badge-maintenance' };
+
+  // issues count for this faculty
+  const issues = DB.get('issues').filter(i => i.borrower_type === 'faculty' && i.borrower_id === f.id && i.status === 'issued').length;
+
+  return `
+    <div class="stat-card" style="cursor:default">
+      <!-- Header strip -->
+      <div style="
+        height:6px;
+        background:linear-gradient(90deg,${color},${color}44);
+        border-radius:6px;
+        margin:-24px -24px 20px -24px;
+        border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+      "></div>
+
+      <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:16px">
+        <!-- Avatar -->
+        <div style="
+          width:52px;height:52px;border-radius:50%;flex-shrink:0;
+          background:linear-gradient(135deg,${color},${color}88);
+          display:flex;align-items:center;justify-content:center;
+          font-family:var(--font-display);font-weight:700;font-size:18px;color:#fff;
+          box-shadow:0 4px 14px ${color}44;
+        ">${initials}</div>
+
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:14.5px;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.name}</div>
+          <div style="font-size:12px;color:var(--text-muted)">${f.designation || 'Faculty'}</div>
+          <span class="badge ${statusMap[f.status] || 'badge-inactive'}" style="margin-top:6px;font-size:10.5px">${f.status}</span>
+        </div>
+      </div>
+
+      <!-- Info rows -->
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+        <div style="display:flex;align-items:center;gap:8px;font-size:12.5px">
+          <span style="width:18px;text-align:center">🏫</span>
+          <span style="color:var(--text-secondary)">${f.department || '—'}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:12.5px">
+          <span style="width:18px;text-align:center">🪪</span>
+          <code style="background:var(--bg-input);padding:2px 7px;border-radius:5px;font-size:11px">${f.employee_id || '—'}</code>
+        </div>
+        ${f.email ? `
+        <div style="display:flex;align-items:center;gap:8px;font-size:12.5px">
+          <span style="width:18px;text-align:center">✉️</span>
+          <span style="color:var(--accent-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.email}</span>
+        </div>` : ''}
+        ${f.phone ? `
+        <div style="display:flex;align-items:center;gap:8px;font-size:12.5px">
+          <span style="width:18px;text-align:center">📞</span>
+          <span style="color:var(--text-secondary)">${f.phone}</span>
+        </div>` : ''}
+      </div>
+
+      <!-- Footer -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding-top:14px;border-top:1px solid var(--border)">
+        <div style="font-size:12px;color:var(--text-muted)">
+          📤 <span style="font-weight:600;color:${issues>0?'var(--accent-danger)':'var(--text-secondary)'}">${issues}</span> active issue${issues!==1?'s':''}
+        </div>
+        <div class="action-btns">
+          <button class="btn btn-secondary btn-sm btn-icon-only" onclick="viewProfile(${f.id})" title="View Profile">👁️</button>
+          <button class="btn btn-secondary btn-sm btn-icon-only" onclick="editFaculty(${f.id})" title="Edit">✏️</button>
+          <button class="btn btn-danger btn-sm btn-icon-only"    onclick="deleteFaculty(${f.id})" title="Delete">🗑️</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ─── TABLE VIEW ─────────────────────────────────────────
+function renderTable() {
+  const area = document.getElementById('contentArea');
+  if (!filtered.length) {
+    area.innerHTML = `
+      <div class="table-card">
+        <div class="empty-state">
+          <div class="empty-icon">👨‍🏫</div>
+          <div class="empty-title">No faculty members found</div>
+          <div class="empty-desc">Add faculty records to manage equipment authorization.</div>
+          <button class="btn btn-primary" onclick="openAddModal()">➕ Add Faculty</button>
+        </div>
+      </div>`;
+    return;
+  }
+
+  area.innerHTML = `
+    <div class="table-card">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>Faculty Member</th><th>Employee ID</th>
+            <th>Department</th><th>Designation</th>
+            <th>Contact</th><th>Qual.</th><th>Status</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filtered.map((f, i) => {
+            const color = deptColors[f.department] || '#94a3b8';
+            return `
+              <tr>
+                <td style="color:var(--text-muted);font-size:12px">${i + 1}</td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <div style="
+                      width:36px;height:36px;border-radius:50%;flex-shrink:0;
+                      background:linear-gradient(135deg,${color},${color}88);
+                      display:flex;align-items:center;justify-content:center;
+                      font-weight:700;font-size:13px;color:#fff
+                    ">${Utils.getInitials(f.name)}</div>
+                    <div>
+                      <div style="font-weight:600">${f.name}</div>
+                      <div class="cell-secondary">${f.email || '—'}</div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <code style="background:var(--bg-input);padding:3px 8px;border-radius:6px;font-size:12px">
+                    ${f.employee_id || '—'}
+                  </code>
+                </td>
+                <td>
+                  <span style="
+                    background:${color}22;color:${color};
+                    padding:3px 10px;border-radius:20px;
+                    font-size:11.5px;font-weight:600
+                  ">${f.department || '—'}</span>
+                </td>
+                <td style="font-size:13px">${f.designation || '—'}</td>
+                <td style="font-size:13px">
+                  <div>${f.phone || '—'}</div>
+                </td>
+                <td style="font-size:13px;color:var(--text-secondary)">${f.qualification || '—'}</td>
+                <td>${Utils.statusBadge(f.status)}</td>
+                <td>
+                  <div class="action-btns">
+                    <button class="btn btn-secondary btn-sm btn-icon-only" onclick="viewProfile(${f.id})" title="Profile">👁️</button>
+                    <button class="btn btn-secondary btn-sm btn-icon-only" onclick="editFaculty(${f.id})"  title="Edit">✏️</button>
+                    <button class="btn btn-danger    btn-sm btn-icon-only" onclick="deleteFaculty(${f.id})" title="Delete">🗑️</button>
+                  </div>
+                </td>
+              </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+// ─── VIEW TOGGLE ────────────────────────────────────────
+function setView(v) {
+  currentView = v;
+  document.getElementById('cardViewBtn').style.cssText =
+    v === 'card' ? 'border-color:var(--accent-primary);color:var(--accent-primary)' : '';
+  document.getElementById('tableViewBtn').style.cssText =
+    v === 'table' ? 'border-color:var(--accent-primary);color:var(--accent-primary)' : '';
+  applyFilters();
+}
+
+// ─── PROFILE MODAL ───────────────────────────────────────
+function viewProfile(id) {
+  const f = allFaculty.find(x => x.id === id);
+  if (!f) return;
+  const color    = deptColors[f.department] || '#94a3b8';
+  const issues   = DB.get('issues').filter(i => i.borrower_type === 'faculty' && i.borrower_id === id);
+  const active   = issues.filter(i => i.status === 'issued').length;
+
+  document.getElementById('profileBody').innerHTML = `
+    <!-- Hero -->
+    <div style="
+      text-align:center;
+      padding:28px 0 20px;
+      border-bottom:1px solid var(--border);
+      margin-bottom:20px
+    ">
+      <div style="
+        width:72px;height:72px;border-radius:50%;margin:0 auto 14px;
+        background:linear-gradient(135deg,${color},${color}88);
+        display:flex;align-items:center;justify-content:center;
+        font-family:var(--font-display);font-weight:800;font-size:26px;color:#fff;
+        box-shadow:0 6px 24px ${color}44;
+      ">${Utils.getInitials(f.name)}</div>
+      <div style="font-family:var(--font-display);font-size:18px;font-weight:700;margin-bottom:4px">${f.name}</div>
+      <div style="color:var(--text-secondary);font-size:13px;margin-bottom:10px">${f.designation || 'Faculty'} · ${f.department || '—'}</div>
+      ${Utils.statusBadge(f.status)}
+    </div>
+
+    <!-- Details grid -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">
+      ${profileRow('🪪','Employee ID', f.employee_id || '—')}
+      ${profileRow('🏫','Department',  f.department   || '—')}
+      ${profileRow('✉️','Email',       f.email        || '—')}
+      ${profileRow('📞','Phone',       f.phone        || '—')}
+      ${profileRow('🎓','Qualification',f.qualification|| '—')}
+      ${profileRow('📅','Joined',      f.join_date ? Utils.formatDate(f.join_date) : '—')}
+    </div>
+
+    <!-- Issue summary -->
+    <div style="
+      background:var(--bg-input);border-radius:var(--radius-md);
+      padding:14px 16px;display:flex;gap:24px
+    ">
+      <div style="text-align:center;flex:1">
+        <div style="font-family:var(--font-display);font-size:24px;font-weight:800;color:var(--accent-primary)">${issues.length}</div>
+        <div style="font-size:12px;color:var(--text-muted)">Total Issues</div>
+      </div>
+      <div style="width:1px;background:var(--border)"></div>
+      <div style="text-align:center;flex:1">
+        <div style="font-family:var(--font-display);font-size:24px;font-weight:800;color:var(--accent-danger)">${active}</div>
+        <div style="font-size:12px;color:var(--text-muted)">Active Issues</div>
+      </div>
+      <div style="width:1px;background:var(--border)"></div>
+      <div style="text-align:center;flex:1">
+        <div style="font-family:var(--font-display);font-size:24px;font-weight:800;color:var(--accent-success)">${issues.length - active}</div>
+        <div style="font-size:12px;color:var(--text-muted)">Returned</div>
+      </div>
+    </div>
+  `;
+  openModal('profileModal');
+}
+
+function profileRow(icon, label, value) {
+  return `
+    <div style="background:var(--bg-input);border-radius:var(--radius-sm);padding:10px 12px">
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:3px">${icon} ${label}</div>
+      <div style="font-size:13px;font-weight:600;word-break:break-all">${value}</div>
+    </div>`;
+}
+
+// ─── ADD MODAL ──────────────────────────────────────────
+function openAddModal() {
+  document.getElementById('editId').value = '';
+  ['fName','fEmpId','fEmail','fPhone','fQual'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fDept').value   = '';
+  document.getElementById('fDesig').value  = 'Asst. Professor';
+  document.getElementById('fStatus').value = 'active';
+  document.getElementById('fJoinDate').value = '';
+  document.getElementById('modalTitle').textContent = 'Add Faculty Member';
+  clearErrors();
+  openModal('facultyModal');
+}
+
+function editFaculty(id) {
+  const f = allFaculty.find(x => x.id === id);
+  if (!f) return;
+  document.getElementById('editId').value   = id;
+  document.getElementById('fName').value    = f.name;
+  document.getElementById('fEmpId').value   = f.employee_id   || '';
+  document.getElementById('fDept').value    = f.department    || '';
+  document.getElementById('fDesig').value   = f.designation   || 'Asst. Professor';
+  document.getElementById('fEmail').value   = f.email         || '';
+  document.getElementById('fPhone').value   = f.phone         || '';
+  document.getElementById('fJoinDate').value = f.join_date    || '';
+  document.getElementById('fQual').value    = f.qualification || '';
+  document.getElementById('fStatus').value  = f.status;
+  document.getElementById('modalTitle').textContent = 'Edit Faculty Member';
+  clearErrors();
+  openModal('facultyModal');
+}
+
+function saveFaculty() {
+  const name  = document.getElementById('fName').value.trim();
+  const empId = document.getElementById('fEmpId').value.trim();
+  const dept  = document.getElementById('fDept').value;
+  let valid   = true;
+
+  if (!name)  { showErr('fNameErr',  'fName');  valid = false; } else { hideErr('fNameErr',  'fName');  }
+  if (!empId) { showErr('fEmpIdErr', 'fEmpId'); valid = false; } else { hideErr('fEmpIdErr', 'fEmpId'); }
+  if (!dept)  { showErr('fDeptErr',  'fDept');  valid = false; } else { hideErr('fDeptErr',  'fDept');  }
+  if (!valid) return;
+
+  const data = {
+    name, employee_id: empId, department: dept,
+    designation:   document.getElementById('fDesig').value,
+    email:         document.getElementById('fEmail').value.trim(),
+    phone:         document.getElementById('fPhone').value.trim(),
+    join_date:     document.getElementById('fJoinDate').value,
+    qualification: document.getElementById('fQual').value.trim(),
+    status:        document.getElementById('fStatus').value,
+  };
+
+  const list = DB.get('faculty');
+  const id   = document.getElementById('editId').value;
+  if (id) {
+    const idx = list.findIndex(f => f.id === parseInt(id));
+    if (idx >= 0) list[idx] = { ...list[idx], ...data };
+    Toast.show('Faculty member updated!', 'success');
+  } else {
+    data.id = DB.nextId('faculty');
+    list.push(data);
+    Toast.show('Faculty member added!', 'success');
+  }
+  DB.set('faculty', list);
+  closeModal('facultyModal');
+  loadData();
+}
+
+async function deleteFaculty(id) {
+  const ok = await Confirm.show('Delete Faculty?', 'This will permanently remove this faculty record.');
+  if (!ok) return;
+  DB.set('faculty', DB.get('faculty').filter(f => f.id !== id));
+  Toast.show('Faculty member deleted.', 'warning');
+  loadData();
+}
+
+// ─── HELPERS ────────────────────────────────────────────
+function showErr(errId, fieldId) {
+  document.getElementById(errId)?.classList.add('show');
+  document.getElementById(fieldId)?.classList.add('invalid');
+}
+function hideErr(errId, fieldId) {
+  document.getElementById(errId)?.classList.remove('show');
+  document.getElementById(fieldId)?.classList.remove('invalid');
+}
+function clearErrors() {
+  document.querySelectorAll('.form-error').forEach(e => e.classList.remove('show'));
+  document.querySelectorAll('.invalid').forEach(e => e.classList.remove('invalid'));
+}
+</script>
+</body>
+</html>

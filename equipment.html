@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Equipment — Labify</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚗️</text></svg>">
+</head>
+<body>
+
+<div class="sidebar-overlay"></div>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo"><div class="logo-icon">⚗️</div><div class="logo-text">Lab<span>ify</span></div></div>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+    <div class="sidebar-footer">
+      <button class="collapse-btn" id="collapseBtn"><span class="collapse-icon nav-icon">◀</span><span class="nav-label">Collapse</span></button>
+    </div>
+  </aside>
+
+  <div class="main-content" id="mainContent">
+    <header class="navbar">
+      <button class="icon-btn" id="mobileMenuBtn">☰</button>
+      <div class="page-title-area">
+        <div class="page-breadcrumb" id="pageBreadcrumb">Labify / Resources</div>
+        <div class="page-heading" id="pageHeading">Equipment</div>
+      </div>
+      <div class="navbar-search">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="globalSearch" placeholder="Search..." autocomplete="off">
+      </div>
+      <div class="navbar-actions">
+        <button class="icon-btn" id="themeToggle">☀️</button>
+        <div style="position:relative">
+          <div class="avatar" id="avatarBtn">AD</div>
+          <div class="profile-dropdown" id="profileDropdown">
+            <div class="dropdown-item">👤 Admin Profile</div>
+            <div class="dropdown-item">⚙️ Settings</div>
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-item">🚪 Sign Out</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <div class="mini-stats" id="miniStats"></div>
+      <div class="table-card">
+        <div class="table-toolbar">
+          <div class="search-box">
+            <span>🔍</span>
+            <input type="text" id="tableSearch" placeholder="Search equipment...">
+          </div>
+          <select class="filter-select" id="categoryFilter">
+            <option value="">All Categories</option>
+            <option value="Electronics">Electronics</option>
+            <option value="Biology">Biology</option>
+            <option value="Chemistry">Chemistry</option>
+            <option value="Physics">Physics</option>
+            <option value="Mechanical">Mechanical</option>
+            <option value="General">General</option>
+          </select>
+          <select class="filter-select" id="statusFilter">
+            <option value="">All Status</option>
+            <option value="available">Available</option>
+            <option value="issued">Issued</option>
+            <option value="maintenance">Maintenance</option>
+          </select>
+          <div class="toolbar-spacer"></div>
+          <button class="btn btn-primary" onclick="openAddModal()">➕ Add Equipment</button>
+        </div>
+        <div id="tableBody"></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="eqModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Add Equipment</div>
+      <button class="modal-close" onclick="closeModal('eqModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editId">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Equipment Name *</label>
+          <input type="text" id="fName" placeholder="e.g. Oscilloscope">
+          <div class="form-error" id="fNameErr">Name is required</div>
+        </div>
+        <div class="form-group">
+          <label>Equipment Code *</label>
+          <input type="text" id="fCode" placeholder="e.g. EQ001">
+          <div class="form-error" id="fCodeErr">Code is required</div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Category *</label>
+          <select id="fCategory">
+            <option value="">Select category</option>
+            <option value="Electronics">Electronics</option>
+            <option value="Biology">Biology</option>
+            <option value="Chemistry">Chemistry</option>
+            <option value="Physics">Physics</option>
+            <option value="Mechanical">Mechanical</option>
+            <option value="General">General</option>
+          </select>
+          <div class="form-error" id="fCatErr">Category is required</div>
+        </div>
+        <div class="form-group">
+          <label>Assigned Lab</label>
+          <select id="fLab">
+            <option value="">Select lab</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Total Quantity *</label>
+          <input type="number" id="fQty" placeholder="e.g. 10" min="1">
+          <div class="form-error" id="fQtyErr">Quantity must be >= 1</div>
+        </div>
+        <div class="form-group">
+          <label>Available Quantity</label>
+          <input type="number" id="fAvail" placeholder="e.g. 8" min="0">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Vendor</label>
+          <select id="fVendor">
+            <option value="">Select vendor</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Condition</label>
+          <select id="fCondition">
+            <option value="excellent">Excellent</option>
+            <option value="good">Good</option>
+            <option value="fair">Fair</option>
+            <option value="poor">Poor</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Purchase Date</label>
+          <input type="date" id="fDate">
+        </div>
+        <div class="form-group">
+          <label>Value (₹)</label>
+          <input type="number" id="fValue" placeholder="e.g. 25000" min="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="fStatus">
+          <option value="available">Available</option>
+          <option value="maintenance">Under Maintenance</option>
+          <option value="issued">Issued</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('eqModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEquipment()">💾 Save Equipment</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-icon">🗑️</div>
+    <div class="confirm-title" id="confirmTitle">Delete Equipment?</div>
+    <div class="confirm-msg" id="confirmMsg">This action cannot be undone.</div>
+    <div class="confirm-actions">
+      <button class="btn btn-secondary" onclick="Confirm.cancel()">Cancel</button>
+      <button class="btn btn-danger" id="confirmBtn" onclick="Confirm.confirm()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+<script>
+let allEquipment = [];
+let filtered = [];
+
+document.addEventListener('DOMContentLoaded', () => {
+  initLayout('equipment.html', 'Equipment', 'LabEMS / Resources');
+  loadData();
+  populateDropdowns();
+  document.getElementById('tableSearch').addEventListener('input', Utils.debounce(applyFilters, 250));
+  document.getElementById('categoryFilter').addEventListener('change', applyFilters);
+  document.getElementById('statusFilter').addEventListener('change', applyFilters);
+});
+
+function loadData() {
+  allEquipment = DB.get('equipment');
+  renderMiniStats();
+  applyFilters();
+}
+
+function populateDropdowns() {
+  const labs = DB.get('labs');
+  const vendors = DB.get('vendors');
+  const labSel = document.getElementById('fLab');
+  const vendorSel = document.getElementById('fVendor');
+  labs.forEach(l => labSel.innerHTML += `<option value="${l.id}">${l.name}</option>`);
+  vendors.forEach(v => vendorSel.innerHTML += `<option value="${v.id}">${v.name}</option>`);
+}
+
+function renderMiniStats() {
+  const totalQty = allEquipment.reduce((s, e) => s + e.quantity, 0);
+  const totalAvail = allEquipment.reduce((s, e) => s + e.available, 0);
+  const totalVal = allEquipment.reduce((s, e) => s + (e.value * e.quantity || 0), 0);
+  const inMaint = allEquipment.filter(e => e.status === 'maintenance').length;
+
+  document.getElementById('miniStats').innerHTML = `
+    <div class="mini-stat"><div class="mini-stat-value text-accent">${allEquipment.length}</div><div class="mini-stat-label">Unique Equipment</div></div>
+    <div class="mini-stat"><div class="mini-stat-value text-success">${totalAvail}</div><div class="mini-stat-label">Available Units</div></div>
+    <div class="mini-stat"><div class="mini-stat-value text-danger">${totalQty - totalAvail}</div><div class="mini-stat-label">Issued Units</div></div>
+    <div class="mini-stat"><div class="mini-stat-value text-warning">${inMaint}</div><div class="mini-stat-label">In Maintenance</div></div>
+    <div class="mini-stat"><div class="mini-stat-value" style="color:var(--accent-teal);font-size:20px">${Utils.formatCurrency(totalVal)}</div><div class="mini-stat-label">Total Value</div></div>
+  `;
+}
+
+function applyFilters() {
+  const q = document.getElementById('tableSearch').value.toLowerCase();
+  const cat = document.getElementById('categoryFilter').value;
+  const status = document.getElementById('statusFilter').value;
+  filtered = allEquipment.filter(e => {
+    const matchQ = !q || e.name.toLowerCase().includes(q) || e.code.toLowerCase().includes(q) || (e.category || '').toLowerCase().includes(q);
+    const matchC = !cat || e.category === cat;
+    const matchS = !status || e.status === status;
+    return matchQ && matchC && matchS;
+  });
+  renderTable();
+}
+
+function getLab(id) { return DB.get('labs').find(l => l.id === parseInt(id))?.name || '—'; }
+function getVendor(id) { return DB.get('vendors').find(v => v.id === parseInt(id))?.name || '—'; }
+
+const condColors = { excellent: '#10b981', good: '#4f8ef7', fair: '#f59e0b', poor: '#ef4444' };
+const catIcons = { Electronics: '⚡', Biology: '🧬', Chemistry: '🧪', Physics: '🔭', Mechanical: '⚙️', General: '📦' };
+
+function renderTable() {
+  const container = document.getElementById('tableBody');
+  if (!filtered.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">🔬</div><div class="empty-title">No equipment found</div><div class="empty-desc">Add equipment or adjust your filters.</div><button class="btn btn-primary" onclick="openAddModal()">➕ Add Equipment</button></div>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <table>
+      <thead><tr>
+        <th>#</th><th>Equipment</th><th>Category</th><th>Lab</th>
+        <th>Qty / Available</th><th>Condition</th><th>Value</th><th>Status</th><th>Actions</th>
+      </tr></thead>
+      <tbody>
+        ${filtered.map((eq, i) => `
+          <tr>
+            <td style="color:var(--text-muted);font-size:12px">${i+1}</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:10px">
+                <div style="width:36px;height:36px;border-radius:10px;background:rgba(79,142,247,0.1);display:flex;align-items:center;justify-content:center;font-size:18px">${catIcons[eq.category] || '📦'}</div>
+                <div>
+                  <div style="font-weight:600">${eq.name}</div>
+                  <div class="cell-secondary">${eq.code}</div>
+                </div>
+              </div>
+            </td>
+            <td><span style="background:rgba(79,142,247,0.1);padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">${eq.category}</span></td>
+            <td style="font-size:13px">${getLab(eq.lab_id)}</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-weight:700;color:var(--accent-primary)">${eq.available}</span>
+                <span style="color:var(--text-muted)">/</span>
+                <span>${eq.quantity}</span>
+              </div>
+              <div class="progress-bar-wrap" style="margin-top:4px;width:80px">
+                <div class="progress-bar" style="width:${eq.quantity ? (eq.available/eq.quantity*100) : 0}%;background:var(--accent-success)"></div>
+              </div>
+            </td>
+            <td><span style="color:${condColors[eq.condition] || '#94a3b8'};font-weight:600;font-size:12.5px">● ${eq.condition || '—'}</span></td>
+            <td style="font-weight:600">${Utils.formatCurrency(eq.value || 0)}</td>
+            <td>${Utils.statusBadge(eq.status)}</td>
+            <td>
+              <div class="action-btns">
+                <button class="btn btn-secondary btn-sm btn-icon-only" onclick="editEquipment(${eq.id})" title="Edit">✏️</button>
+                <button class="btn btn-danger btn-sm btn-icon-only" onclick="deleteEquipment(${eq.id})" title="Delete">🗑️</button>
+              </div>
+            </td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+function openAddModal() {
+  document.getElementById('editId').value = '';
+  document.getElementById('fName').value = '';
+  document.getElementById('fCode').value = '';
+  document.getElementById('fCategory').value = '';
+  document.getElementById('fLab').value = '';
+  document.getElementById('fQty').value = '';
+  document.getElementById('fAvail').value = '';
+  document.getElementById('fVendor').value = '';
+  document.getElementById('fCondition').value = 'good';
+  document.getElementById('fDate').value = '';
+  document.getElementById('fValue').value = '';
+  document.getElementById('fStatus').value = 'available';
+  document.getElementById('modalTitle').textContent = 'Add Equipment';
+  clearErrors();
+  openModal('eqModal');
+}
+
+function editEquipment(id) {
+  const eq = allEquipment.find(e => e.id === id);
+  if (!eq) return;
+  document.getElementById('editId').value = id;
+  document.getElementById('fName').value = eq.name;
+  document.getElementById('fCode').value = eq.code;
+  document.getElementById('fCategory').value = eq.category;
+  document.getElementById('fLab').value = eq.lab_id || '';
+  document.getElementById('fQty').value = eq.quantity;
+  document.getElementById('fAvail').value = eq.available;
+  document.getElementById('fVendor').value = eq.vendor_id || '';
+  document.getElementById('fCondition').value = eq.condition || 'good';
+  document.getElementById('fDate').value = eq.purchase_date || '';
+  document.getElementById('fValue').value = eq.value || '';
+  document.getElementById('fStatus').value = eq.status;
+  document.getElementById('modalTitle').textContent = 'Edit Equipment';
+  clearErrors();
+  openModal('eqModal');
+}
+
+function saveEquipment() {
+  const name = document.getElementById('fName').value.trim();
+  const code = document.getElementById('fCode').value.trim();
+  const category = document.getElementById('fCategory').value;
+  const qty = parseInt(document.getElementById('fQty').value) || 0;
+  let valid = true;
+
+  [['fName','fNameErr'], ['fCode','fCodeErr']].forEach(([f, e]) => {
+    const val = document.getElementById(f).value.trim();
+    if (!val) { showError(e); document.getElementById(f).classList.add('invalid'); valid = false; }
+    else { hideError(e); document.getElementById(f).classList.remove('invalid'); }
+  });
+
+  if (!category) { showError('fCatErr'); document.getElementById('fCategory').classList.add('invalid'); valid = false; }
+  else { hideError('fCatErr'); document.getElementById('fCategory').classList.remove('invalid'); }
+
+  if (qty < 1) { showError('fQtyErr'); document.getElementById('fQty').classList.add('invalid'); valid = false; }
+  else { hideError('fQtyErr'); document.getElementById('fQty').classList.remove('invalid'); }
+
+  if (!valid) return;
+
+  const avail = parseInt(document.getElementById('fAvail').value) || qty;
+  const data = {
+    name, code, category,
+    lab_id: parseInt(document.getElementById('fLab').value) || null,
+    quantity: qty,
+    available: Math.min(avail, qty),
+    vendor_id: parseInt(document.getElementById('fVendor').value) || null,
+    condition: document.getElementById('fCondition').value,
+    purchase_date: document.getElementById('fDate').value,
+    value: parseFloat(document.getElementById('fValue').value) || 0,
+    status: document.getElementById('fStatus').value
+  };
+
+  const equipment = DB.get('equipment');
+  const id = document.getElementById('editId').value;
+  if (id) {
+    const idx = equipment.findIndex(e => e.id === parseInt(id));
+    if (idx >= 0) equipment[idx] = { ...equipment[idx], ...data };
+    Toast.show('Equipment updated!', 'success');
+  } else {
+    data.id = DB.nextId('equipment');
+    equipment.push(data);
+    Toast.show('Equipment added!', 'success');
+  }
+
+  DB.set('equipment', equipment);
+  closeModal('eqModal');
+  loadData();
+}
+
+async function deleteEquipment(id) {
+  const ok = await Confirm.show('Delete Equipment?', 'This will permanently remove this equipment record.');
+  if (!ok) return;
+  DB.set('equipment', DB.get('equipment').filter(e => e.id !== id));
+  Toast.show('Equipment deleted.', 'warning');
+  loadData();
+}
+
+function showError(id) { document.getElementById(id)?.classList.add('show'); }
+function hideError(id) { document.getElementById(id)?.classList.remove('show'); }
+function clearErrors() {
+  document.querySelectorAll('.form-error').forEach(e => e.classList.remove('show'));
+  document.querySelectorAll('.invalid').forEach(e => e.classList.remove('invalid'));
+}
+</script>
+</body>
+</html>

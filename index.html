@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Labify</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚗️</text></svg>">
+</head>
+<body>
+
+<div class="sidebar-overlay"></div>
+<div class="app-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">⚗️</div>
+      <div class="logo-text">Lab<span>ify</span></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+    <div class="sidebar-footer">
+      <button class="collapse-btn" id="collapseBtn">
+        <span class="collapse-icon nav-icon">◀</span>
+        <span class="nav-label">Collapse</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-content" id="mainContent">
+    <header class="navbar">
+      <button class="icon-btn" id="mobileMenuBtn">☰</button>
+      <div class="page-title-area">
+        <div class="page-breadcrumb" id="pageBreadcrumb">Labify</div>
+        <div class="page-heading" id="pageHeading">Dashboard</div>
+      </div>
+      <div class="navbar-search">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="globalSearch" placeholder="Search equipment, people..." autocomplete="off">
+      </div>
+      <div class="navbar-actions">
+        <button class="icon-btn" id="themeToggle" title="Toggle Theme">☀️</button>
+        <div style="position:relative">
+          <div class="avatar" id="avatarBtn">AD</div>
+          <div class="profile-dropdown" id="profileDropdown">
+            <div class="dropdown-item">👤 Admin Profile</div>
+            <div class="dropdown-item">⚙️ Settings</div>
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-item">🚪 Sign Out</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-content" id="pageContent">
+      <!-- Rendered by JS -->
+    </main>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- CONFIRM DIALOG -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-icon">⚠️</div>
+    <div class="confirm-title" id="confirmTitle">Are you sure?</div>
+    <div class="confirm-msg" id="confirmMsg">This action cannot be undone.</div>
+    <div class="confirm-actions">
+      <button class="btn btn-secondary" onclick="Confirm.cancel()">Cancel</button>
+      <button class="btn btn-danger" id="confirmBtn" onclick="Confirm.confirm()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  initLayout('index.html', 'Dashboard', 'Labify / Overview');
+  renderDashboard();
+});
+
+function renderDashboard() {
+  const equipment = DB.get('equipment');
+  const issues = DB.get('issues');
+  const maintenance = DB.get('maintenance');
+  const labs = DB.get('labs');
+  const students = DB.get('students');
+  const faculty = DB.get('faculty');
+  const vendors = DB.get('vendors');
+  const technicians = DB.get('technicians');
+
+  const totalEquipment = equipment.reduce((s, e) => s + e.quantity, 0);
+  const totalAvailable = equipment.reduce((s, e) => s + e.available, 0);
+  const totalIssued = issues.filter(i => i.status === 'issued').length;
+  const inMaintenance = maintenance.filter(m => m.status !== 'completed').length;
+  const activeLabs = labs.filter(l => l.status === 'active').length;
+
+  document.getElementById('pageContent').innerHTML = `
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card" style="--delay:0">
+        <div class="stat-card-header">
+          <div class="stat-icon blue">🔬</div>
+          <span class="stat-trend neutral">+3 this month</span>
+        </div>
+        <div class="stat-value" id="sv1">0</div>
+        <div class="stat-label">Total Equipment Items</div>
+      </div>
+      <div class="stat-card" style="--delay:1">
+        <div class="stat-card-header">
+          <div class="stat-icon green">✅</div>
+          <span class="stat-trend up">↑ 12%</span>
+        </div>
+        <div class="stat-value" id="sv2">0</div>
+        <div class="stat-label">Available Items</div>
+      </div>
+      <div class="stat-card" style="--delay:2">
+        <div class="stat-card-header">
+          <div class="stat-icon red">📤</div>
+          <span class="stat-trend down">↓ 4%</span>
+        </div>
+        <div class="stat-value" id="sv3">0</div>
+        <div class="stat-label">Currently Issued</div>
+      </div>
+      <div class="stat-card" style="--delay:3">
+        <div class="stat-card-header">
+          <div class="stat-icon amber">🔧</div>
+          <span class="stat-trend neutral">Ongoing</span>
+        </div>
+        <div class="stat-value" id="sv4">0</div>
+        <div class="stat-label">Under Maintenance</div>
+      </div>
+    </div>
+
+    <!-- QUICK ACTIONS -->
+    <div class="quick-actions">
+      <a href="issue.html" class="quick-action-btn">
+        <div class="qa-icon" style="background:rgba(79,142,247,0.15)">📤</div>
+        <span class="qa-label">Issue Equipment</span>
+      </a>
+      <a href="maintenance.html" class="quick-action-btn">
+        <div class="qa-icon" style="background:rgba(245,158,11,0.15)">🔧</div>
+        <span class="qa-label">Add Maintenance</span>
+      </a>
+      <a href="equipment.html" class="quick-action-btn">
+        <div class="qa-icon" style="background:rgba(16,185,129,0.15)">➕</div>
+        <span class="qa-label">Add Equipment</span>
+      </a>
+      <a href="students.html" class="quick-action-btn">
+        <div class="qa-icon" style="background:rgba(124,58,237,0.15)">🎓</div>
+        <span class="qa-label">Add Student</span>
+      </a>
+      <a href="labs.html" class="quick-action-btn">
+        <div class="qa-icon" style="background:rgba(6,182,212,0.15)">🏛️</div>
+        <span class="qa-label">Manage Labs</span>
+      </a>
+      <a href="vendors.html" class="quick-action-btn">
+        <div class="qa-icon" style="background:rgba(239,68,68,0.15)">🏢</div>
+        <span class="qa-label">Vendors</span>
+      </a>
+    </div>
+
+    <!-- CHARTS -->
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Equipment by Category</div>
+            <div class="chart-subtitle">Total units per category</div>
+          </div>
+        </div>
+        <canvas class="bar-chart" id="barChart"></canvas>
+        <div class="chart-legend" id="barLegend"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Issue Activity</div>
+            <div class="chart-subtitle">Issues over last 6 months</div>
+          </div>
+        </div>
+        <canvas class="line-chart" id="lineChart"></canvas>
+        <div class="chart-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#4f8ef7"></div>Issues</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div>Returns</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTTOM GRID -->
+    <div class="charts-grid">
+      <!-- RECENT ISSUES -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Recent Issues</div>
+            <div class="chart-subtitle">Latest equipment transactions</div>
+          </div>
+          <a href="issue.html" class="btn btn-secondary btn-sm">View All</a>
+        </div>
+        <div id="recentIssues"></div>
+      </div>
+
+      <!-- SYSTEM OVERVIEW -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">System Overview</div>
+            <div class="chart-subtitle">Key metrics at a glance</div>
+          </div>
+        </div>
+        <div id="systemOverview"></div>
+      </div>
+    </div>
+  `;
+
+  // Animate stat counters
+  animateCounter('sv1', totalEquipment);
+  animateCounter('sv2', totalAvailable);
+  animateCounter('sv3', totalIssued);
+  animateCounter('sv4', inMaintenance);
+
+  // Render charts after layout
+  setTimeout(() => {
+    renderBarChart(equipment);
+    renderLineChart();
+    renderRecentIssues(issues, equipment);
+    renderSystemOverview({ labs, students, faculty, vendors, technicians, activeLabs });
+  }, 100);
+}
+
+function animateCounter(id, target) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  let cur = 0;
+  const step = Math.ceil(target / 40);
+  const timer = setInterval(() => {
+    cur = Math.min(cur + step, target);
+    el.textContent = cur;
+    if (cur >= target) clearInterval(timer);
+  }, 30);
+}
+
+function renderBarChart(equipment) {
+  const cats = {};
+  equipment.forEach(eq => {
+    cats[eq.category] = (cats[eq.category] || 0) + eq.quantity;
+  });
+  const labels = Object.keys(cats);
+  const data = Object.values(cats);
+  const colors = ['#4f8ef7', '#7c3aed', '#06b6d4', '#10b981', '#f59e0b', '#ef4444'];
+
+  Charts.drawBar('barChart', labels, data, colors);
+
+  const legend = document.getElementById('barLegend');
+  if (legend) {
+    legend.innerHTML = labels.map((l, i) => `
+      <div class="legend-item">
+        <div class="legend-dot" style="background:${colors[i % colors.length]}"></div>
+        ${l}
+      </div>`).join('');
+  }
+}
+
+function renderLineChart() {
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+  Charts.drawLine('lineChart', months, [
+    { data: [4, 7, 5, 9, 6, 8], color: '#4f8ef7' },
+    { data: [2, 5, 4, 6, 5, 7], color: '#10b981' }
+  ]);
+}
+
+function renderRecentIssues(issues, equipment) {
+  const container = document.getElementById('recentIssues');
+  if (!container) return;
+  const recent = [...issues].sort((a, b) => b.id - a.id).slice(0, 4);
+
+  if (!recent.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No issues yet</div></div>`;
+    return;
+  }
+
+  container.innerHTML = `<ul class="activity-list">` + recent.map(issue => `
+    <li class="activity-item">
+      <div class="activity-dot" style="background:${issue.status === 'issued' ? '#ef4444' : '#10b981'}"></div>
+      <div class="activity-content">
+        <div class="activity-text">
+          <span>${issue.equipment_name}</span> — ${issue.borrower_name}
+        </div>
+        <div class="activity-time">${issue.status === 'issued' ? '📤 Issued' : '📥 Returned'} · ${Utils.formatDate(issue.issued_date)}</div>
+      </div>
+      ${Utils.statusBadge(issue.status)}
+    </li>`).join('') + `</ul>`;
+}
+
+function renderSystemOverview({ labs, students, faculty, vendors, technicians, activeLabs }) {
+  const items = [
+    { label: 'Active Laboratories', value: activeLabs, total: labs.length, color: '#4f8ef7' },
+    { label: 'Registered Students', value: students.filter(s => s.status === 'active').length, total: students.length, color: '#7c3aed' },
+    { label: 'Faculty Members', value: faculty.filter(f => f.status === 'active').length, total: faculty.length, color: '#06b6d4' },
+    { label: 'Active Vendors', value: vendors.filter(v => v.status === 'active').length, total: vendors.length, color: '#10b981' },
+    { label: 'Technicians', value: technicians.filter(t => t.status === 'active').length, total: technicians.length, color: '#f59e0b' },
+  ];
+
+  document.getElementById('systemOverview').innerHTML = items.map(item => `
+    <div style="margin-bottom:18px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:13px;font-weight:500">${item.label}</span>
+        <span style="font-size:13px;font-weight:700;color:${item.color}">${item.value}/${item.total}</span>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" style="width:${item.total ? (item.value/item.total*100) : 0}%;background:${item.color}"></div>
+      </div>
+    </div>`).join('');
+}
+
+window.addEventListener('resize', () => {
+  const equipment = DB.get('equipment');
+  renderBarChart(equipment);
+  renderLineChart();
+});
+</script>
+</body>
+</html>

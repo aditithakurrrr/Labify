@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Laboratories — Labify</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚗️</text></svg>">
+</head>
+<body>
+
+<div class="sidebar-overlay"></div>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">⚗️</div>
+      <div class="logo-text">Lab<span>ify</span></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+    <div class="sidebar-footer">
+      <button class="collapse-btn" id="collapseBtn">
+        <span class="collapse-icon nav-icon">◀</span>
+        <span class="nav-label">Collapse</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="main-content" id="mainContent">
+    <header class="navbar">
+      <button class="icon-btn" id="mobileMenuBtn">☰</button>
+      <div class="page-title-area">
+        <div class="page-breadcrumb" id="pageBreadcrumb">Labify / Resources</div>
+        <div class="page-heading" id="pageHeading">Laboratories</div>
+      </div>
+      <div class="navbar-search">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="globalSearch" placeholder="Search..." autocomplete="off">
+      </div>
+      <div class="navbar-actions">
+        <button class="icon-btn" id="themeToggle">☀️</button>
+        <div style="position:relative">
+          <div class="avatar" id="avatarBtn">AD</div>
+          <div class="profile-dropdown" id="profileDropdown">
+            <div class="dropdown-item">👤 Admin Profile</div>
+            <div class="dropdown-item">⚙️ Settings</div>
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-item">🚪 Sign Out</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <!-- Mini Stats -->
+      <div class="mini-stats" id="miniStats"></div>
+
+      <!-- Table -->
+      <div class="table-card">
+        <div class="table-toolbar">
+          <div class="search-box">
+            <span>🔍</span>
+            <input type="text" id="tableSearch" placeholder="Search laboratories...">
+          </div>
+          <select class="filter-select" id="statusFilter">
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="maintenance">Maintenance</option>
+            <option value="inactive">Inactive</option>
+          </select>
+          <div class="toolbar-spacer"></div>
+          <button class="btn btn-primary" onclick="openAddModal()">
+            ➕ Add Laboratory
+          </button>
+        </div>
+        <div id="tableBody"></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-overlay" id="labModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Add Laboratory</div>
+      <button class="modal-close" onclick="closeModal('labModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editId">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Lab Name *</label>
+          <input type="text" id="fName" placeholder="e.g. Physics Lab A">
+          <div class="form-error" id="fNameErr">Name is required</div>
+        </div>
+        <div class="form-group">
+          <label>Lab Code *</label>
+          <input type="text" id="fCode" placeholder="e.g. PHY-A">
+          <div class="form-error" id="fCodeErr">Code is required</div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Building / Block</label>
+          <input type="text" id="fBuilding" placeholder="e.g. Block A">
+        </div>
+        <div class="form-group">
+          <label>Capacity (Students)</label>
+          <input type="number" id="fCapacity" placeholder="e.g. 30" min="1">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="fStatus">
+          <option value="active">Active</option>
+          <option value="maintenance">Under Maintenance</option>
+          <option value="inactive">Inactive</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('labModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveLab()">💾 Save Laboratory</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-icon">🗑️</div>
+    <div class="confirm-title" id="confirmTitle">Delete Laboratory?</div>
+    <div class="confirm-msg" id="confirmMsg">This will permanently remove the laboratory record.</div>
+    <div class="confirm-actions">
+      <button class="btn btn-secondary" onclick="Confirm.cancel()">Cancel</button>
+      <button class="btn btn-danger" id="confirmBtn" onclick="Confirm.confirm()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+<script>
+let allLabs = [];
+let filtered = [];
+
+document.addEventListener('DOMContentLoaded', () => {
+  initLayout('labs.html', 'Laboratories', 'Labify / Resources');
+  loadLabs();
+
+  document.getElementById('tableSearch').addEventListener('input', Utils.debounce(applyFilters, 250));
+  document.getElementById('statusFilter').addEventListener('change', applyFilters);
+});
+
+function loadLabs() {
+  allLabs = DB.get('labs');
+  renderMiniStats();
+  applyFilters();
+}
+
+function renderMiniStats() {
+  const active = allLabs.filter(l => l.status === 'active').length;
+  const maint = allLabs.filter(l => l.status === 'maintenance').length;
+  const totalEq = allLabs.reduce((s, l) => s + (l.equipment_count || 0), 0);
+
+  document.getElementById('miniStats').innerHTML = `
+    <div class="mini-stat">
+      <div class="mini-stat-value text-accent">${allLabs.length}</div>
+      <div class="mini-stat-label">Total Labs</div>
+    </div>
+    <div class="mini-stat">
+      <div class="mini-stat-value text-success">${active}</div>
+      <div class="mini-stat-label">Active</div>
+    </div>
+    <div class="mini-stat">
+      <div class="mini-stat-value text-warning">${maint}</div>
+      <div class="mini-stat-label">Under Maintenance</div>
+    </div>
+    <div class="mini-stat">
+      <div class="mini-stat-value" style="color:var(--accent-teal)">${totalEq}</div>
+      <div class="mini-stat-label">Total Equipment</div>
+    </div>
+  `;
+}
+
+function applyFilters() {
+  const q = document.getElementById('tableSearch').value.toLowerCase();
+  const status = document.getElementById('statusFilter').value;
+  filtered = allLabs.filter(l => {
+    const matchQ = !q || l.name.toLowerCase().includes(q) || l.code.toLowerCase().includes(q) || (l.building || '').toLowerCase().includes(q);
+    const matchS = !status || l.status === status;
+    return matchQ && matchS;
+  });
+  renderTable();
+}
+
+function renderTable() {
+  const container = document.getElementById('tableBody');
+  if (!filtered.length) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🏛️</div>
+        <div class="empty-title">No laboratories found</div>
+        <div class="empty-desc">Try adjusting your filters or add a new laboratory.</div>
+        <button class="btn btn-primary" onclick="openAddModal()">➕ Add Laboratory</button>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Lab Name</th>
+          <th>Code</th>
+          <th>Building</th>
+          <th>Capacity</th>
+          <th>Equipment</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${filtered.map((lab, i) => `
+          <tr>
+            <td style="color:var(--text-muted);font-size:12px">${i + 1}</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:10px">
+                <div style="width:36px;height:36px;border-radius:10px;background:rgba(79,142,247,0.12);display:flex;align-items:center;justify-content:center;font-size:18px">🏛️</div>
+                <div>
+                  <div style="font-weight:600">${lab.name}</div>
+                  <div class="cell-secondary">ID: ${lab.id}</div>
+                </div>
+              </div>
+            </td>
+            <td><code style="background:var(--bg-input);padding:3px 8px;border-radius:6px;font-size:12px">${lab.code}</code></td>
+            <td>${lab.building || '—'}</td>
+            <td>${lab.capacity || '—'} seats</td>
+            <td>
+              <span style="font-weight:600;color:var(--accent-primary)">${lab.equipment_count || 0}</span>
+              <span style="color:var(--text-muted);font-size:12px"> items</span>
+            </td>
+            <td>${Utils.statusBadge(lab.status)}</td>
+            <td>
+              <div class="action-btns">
+                <button class="btn btn-secondary btn-sm btn-icon-only" onclick="editLab(${lab.id})" title="Edit">✏️</button>
+                <button class="btn btn-danger btn-sm btn-icon-only" onclick="deleteLab(${lab.id})" title="Delete">🗑️</button>
+              </div>
+            </td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+function openAddModal() {
+  document.getElementById('editId').value = '';
+  document.getElementById('fName').value = '';
+  document.getElementById('fCode').value = '';
+  document.getElementById('fBuilding').value = '';
+  document.getElementById('fCapacity').value = '';
+  document.getElementById('fStatus').value = 'active';
+  document.getElementById('modalTitle').textContent = 'Add Laboratory';
+  clearErrors();
+  openModal('labModal');
+}
+
+function editLab(id) {
+  const lab = allLabs.find(l => l.id === id);
+  if (!lab) return;
+  document.getElementById('editId').value = id;
+  document.getElementById('fName').value = lab.name;
+  document.getElementById('fCode').value = lab.code;
+  document.getElementById('fBuilding').value = lab.building || '';
+  document.getElementById('fCapacity').value = lab.capacity || '';
+  document.getElementById('fStatus').value = lab.status;
+  document.getElementById('modalTitle').textContent = 'Edit Laboratory';
+  clearErrors();
+  openModal('labModal');
+}
+
+function saveLab() {
+  const name = document.getElementById('fName').value.trim();
+  const code = document.getElementById('fCode').value.trim();
+  let valid = true;
+
+  if (!name) { showError('fNameErr'); document.getElementById('fName').classList.add('invalid'); valid = false; }
+  else { hideError('fNameErr'); document.getElementById('fName').classList.remove('invalid'); }
+
+  if (!code) { showError('fCodeErr'); document.getElementById('fCode').classList.add('invalid'); valid = false; }
+  else { hideError('fCodeErr'); document.getElementById('fCode').classList.remove('invalid'); }
+
+  if (!valid) return;
+
+  const id = document.getElementById('editId').value;
+  const data = {
+    name, code,
+    building: document.getElementById('fBuilding').value.trim(),
+    capacity: parseInt(document.getElementById('fCapacity').value) || 0,
+    status: document.getElementById('fStatus').value,
+    equipment_count: 0
+  };
+
+  const labs = DB.get('labs');
+  if (id) {
+    const idx = labs.findIndex(l => l.id === parseInt(id));
+    if (idx >= 0) { data.equipment_count = labs[idx].equipment_count || 0; labs[idx] = { ...labs[idx], ...data }; }
+    Toast.show('Laboratory updated successfully!', 'success');
+  } else {
+    data.id = DB.nextId('labs');
+    labs.push(data);
+    Toast.show('Laboratory added successfully!', 'success');
+  }
+
+  DB.set('labs', labs);
+  closeModal('labModal');
+  loadLabs();
+}
+
+async function deleteLab(id) {
+  const ok = await Confirm.show('Delete Laboratory?', 'This will permanently remove the laboratory record. Equipment in this lab will be unassigned.');
+  if (!ok) return;
+  const labs = DB.get('labs').filter(l => l.id !== id);
+  DB.set('labs', labs);
+  Toast.show('Laboratory deleted.', 'warning');
+  loadLabs();
+}
+
+function showError(id) { document.getElementById(id).classList.add('show'); }
+function hideError(id) { document.getElementById(id).classList.remove('show'); }
+function clearErrors() {
+  document.querySelectorAll('.form-error').forEach(e => e.classList.remove('show'));
+  document.querySelectorAll('.invalid').forEach(e => e.classList.remove('invalid'));
+}
+</script>
+</body>
+</html>
