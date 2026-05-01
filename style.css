@@ -53,18 +53,18 @@
 }
 
 [data-theme="light"] {
-  --bg-primary: #f0f4ff;
-  --bg-secondary: #e8eeff;
-  --bg-card: rgba(255, 255, 255, 0.7);
-  --bg-card-hover: rgba(255, 255, 255, 0.9);
-  --bg-input: rgba(255, 255, 255, 0.8);
+  --bg-primary: #fffdf2;   
+  --bg-secondary: #fffbe6; 
+  --bg-card: rgba(255, 253, 242, 0.8);
+  --bg-card-hover: rgba(255, 253, 242, 0.95);
+  --bg-input: rgba(255, 253, 242, 0.9);
   --border: rgba(0, 0, 0, 0.08);
   --border-focus: rgba(79, 142, 247, 0.5);
   --text-primary: #0a0e1a;
   --text-secondary: #4a5568;
   --text-muted: #94a3b8;
-  --glass: rgba(255, 255, 255, 0.6);
-  --glass-border: rgba(255, 255, 255, 0.8);
+  --glass: rgba(255, 253, 242, 0.6);
+  --glass-border: rgba(255, 253, 242, 0.85);
   --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
   --shadow-md: 0 8px 32px rgba(0,0,0,0.12);
   --shadow-lg: 0 20px 60px rgba(0,0,0,0.15);
